@@ -3,7 +3,6 @@ import socket
 import pyfiglet
 
 
-# commands
 class PortScanner:
     def __init__(self, ip_addr, ports=None, timeout=0.5):
         if ports is None:
@@ -11,6 +10,7 @@ class PortScanner:
         self.ip_addr = ip_addr
         self.ports = ports
         self.open_ports = []
+        self.closed_ports = []
         self.timeout = timeout
 
     def probe_port(self, ip_addr, port):
@@ -34,10 +34,22 @@ class PortScanner:
             if self.probe_port(self.ip_addr, port):
                 self.open_ports.append(port)
                 # print(f"port {port} is open")
-            # else:
-            # print(f"port {port} is closed")
+            else:
+                self.closed_ports.append(port)
+        print("Open Ports : ", self.getOpenPorts())
 
 
-#portscanner = PortScanner("127.0.0.1")
-#portscanner.run()
-#print(portscanner.getOpenPorts())
+class DnsResolver:
+    def __init__(self, domain):
+        self.ip_addr = None
+        self.domain = domain
+
+    def set_domain(self, domain):
+        self.domain = domain
+
+    def get_host(self):
+        return str(self.domain)
+
+    def execute(self):
+        self.ip_addr = socket.gethostbyname(self.domain)
+        print("Domain :", self.domain, "is ", self.ip_addr)

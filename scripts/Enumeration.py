@@ -90,3 +90,81 @@ class Whois:
 
     def execute(self):
         print(self.get_whois_data())
+
+
+class HostDiscovery:
+    def __init__(self, targetHost):
+        self.targetHost = str(targetHost)
+        self.portRange = "0"
+        self.Ether = scapy.Ether()
+        self.ARP = scapy.ARP()
+        self.ICMP = scapy.ICMP()
+        self.IP = scapy.IP()
+        self.TCP = scapy.TCP()
+        self.UDP = scapy.UDP()
+
+    def performArpPing(self, broadcastDestination="ff:ff:ff:ff:ff:ff", timeout=0):
+        self.Ether.dst = broadcastDestination
+        self.ARP.pdst = self.targetHost
+        request_broadcast = self.Ether / self.ARP
+        clients = scapy.srp(request_broadcast, timeout=1)[0]
+        self.printMsg("Performing Arp Ping")
+        for element in clients:
+            print(element[1].psrc + "      " + element[1].hwsrc)
+        print(str(len(clients)) + " Alive Host")
+
+    def performIcmpPing(self, ttl=20):
+        self.IP.dst = self.targetHost
+        self.IP.ttl = ttl
+        request_ICMP_ping = self.IP / self.ICMP
+        self.printMsg("Performing ICMP Ping")
+        ans, unans = scapy.sr(request_ICMP_ping)
+        print(ans.summary())
+
+    def performTcpSynPing(self, port=80):
+        self.IP.dst = self.targetHost
+        self.TCP.dport = port
+        self.TCP.flags = "S"
+        request_TCP_ping = self.IP / self.TCP
+
+        # ans, unans = sr(IP(dst=host)/TCP(dport=port, flags="S"))
+        self.printMsg("Performing TCP Ping")
+        ans, unans = scapy.sr(request_TCP_ping)
+        print(ans.summary())
+
+    def performTcpAckScan(self):
+        self.IP.dst = self.targetHost
+        self.TCP.flags = "A"
+        self.TCP.dport = 80
+        request_ACK_Scan = self.IP / self.TCP
+        ans, unans = scapy.sr(request_ACK_Scan)
+        print(ans.summary())
+
+    def performUdpPing(self):
+        self.IP.dst = self.targetHost
+        request_UDP_ping = self.IP / self.UDP
+        self.printMsg("Performing UDP Ping")
+        ans, unans = scapy.sr(request_UDP_ping)
+        print(ans.summary())
+
+    def performIPscan(self):
+        self.IP.dst = self.targetHost
+        self.IP.proto = (0, 255)
+        self.printMsg("Performing IP scan")
+        requestIpScan = self.IP / "Hello"
+        ans, unans = scapy.sr(requestIpScan, retry=2)
+        print(ans.summary())
+
+    def printMsg(self, msg):
+        print("\n" + "****" * 20)
+        print(msg)
+        print("****" * 20)
+
+    def execute(self):
+        # self.performTCPAckScan()
+        # self.performIPscan()
+        self.performIcmpPing()
+        self.performArpPing()
+        self.performTcpSynPing()
+        self.performTcpAckScan()
+        self.performUdpPing()

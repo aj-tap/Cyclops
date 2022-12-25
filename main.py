@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 
 """
-Cyclops: Recon Automation Scripts
-usage main.py -d http://wikipedia.org/
+Cyclops: Recon Scripts
+usage main.py -t 192.168.112.1/24
 """
 
 from scripts import Enumeration
@@ -10,9 +10,8 @@ from scripts import Banner
 from scripts import Discovery
 import argparse
 
-module_name = "Cyclops: Recon Automation Scripts"
+module_name = "Cyclops: Recon Scripts"
 __version__ = "0.0.1"
-
 
 
 class CyclopsInvoker(object):
@@ -29,17 +28,23 @@ class CyclopsInvoker(object):
 
 if __name__ == "__main__":
     invoker = CyclopsInvoker()
-    msg = "Cyclops Recon Automation Scripts"
+    msg = "Cyclops Recon Scripts"
     parser = argparse.ArgumentParser(description=msg)
-    parser.add_argument("-d", "--domain", type=str, required=True, help="Set target Domain")
-    args = parser.parse_args()
+    parser.add_argument("--host", type=str, required=False, help="Set target Domain/host")
+    parser.add_argument('-p', '--ports', help='Specify ports to scan', required=False)
+    parser.add_argument('-s', '--scan', help='Scan type (pingscan, crawlPage, dns, portscan ))', required=True)
+    parser.add_argument('-v', '--verbose', help='verbose option', required=False, action='store_true')
+    args = vars(parser.parse_args())
 
     invoker.add_command(Banner.WelcomeMessage())
-    # invoker.add_command(Enumeration.DnsResolver("google.com"))
-    # invoker.add_command(Enumeration.DnsResolver("facebook.com"))
-    # invoker.add_command(Enumeration.Whois("google.com"))
-    # invoker.add_command(Enumeration.PortScanner("127.0.0.1"))
-    # invoker.add_command(Discovery.DefaultPages("https://en.wikipedia.org/"))
-    invoker.add_command(Discovery.DefaultPages(args.domain))
-    # invoker.add_command(Discovery.DefaultPages("https://pythonscraping.com/"))
+    if args['scan'] == 'crawlPage':
+        invoker.add_command(Discovery.DefaultPages(args['host']))
+    elif args['scan'] == 'pingscan':
+        invoker.add_command(Enumeration.HostDiscovery(args['host']))
+    elif args['scan'] == 'portscan':
+        invoker.add_command(Enumeration.PortScanner(args['host']))
+    elif args['scan'] == 'dns':
+        invoker.add_command(Enumeration.DnsResolver(args['host']))
+        invoker.add_command(Enumeration.Whois(args['host']))
+
     invoker.run()
